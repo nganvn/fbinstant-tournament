@@ -1,0 +1,33 @@
+{
+  "name": "Create Tournament - SUN",
+  "version": "1.1",
+  "manifest_version": 3,
+  "description": "Create tournament",
+  "permissions": [
+    "declarativeContent",
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "icons": {
+    "16": "icons/icon16x16.png",
+    "32": "icons/icon32x32.png",
+    "48": "icons/icon48x48.png",
+    "128": "icons/icon128x128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "lib/jquery.min.js",
+        "content-scripts/const.js",
+        "content-scripts/api.js",
+        "content-scripts/ultils.js",
+        "content-scripts/addCss.js",
+        "content-scripts/index.js"
+      ]
+    }
+  ]
+}
