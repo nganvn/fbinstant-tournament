@@ -74,6 +74,10 @@ function addCss() {
     height: 120px;
     color: #000000;
   }
+
+  #host {
+    width: 83.5%;
+  }
   `
 
   var styleSheet = document.createElement("style");

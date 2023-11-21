@@ -259,8 +259,8 @@ function initPopup() {
 function initConfig() {
   Config.AppId = document.getElementsByClassName('_2lj1')[0].innerText || ''
 
-  Config.Host = getData(DataKey.HOST) || ''
-  Config.UseLeaderboard = getData(DataKey.USE_LEADERBOARD) || false
+  Config.Host = getData(DataKey.HOST) || DEFAULT_HOST
+  Config.UseLeaderboard = getData(DataKey.USE_LEADERBOARD) || true
 }
 
 function addHistory(command) {

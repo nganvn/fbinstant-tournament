@@ -4,6 +4,8 @@ const TOKEN = ''
 
 const URL = 'leaderboards'
 
+const DEFAULT_HOST = 'https://fbig-leaderboards.citigo.site'
+
 const DEFAULT_LEADERBOARD = {
     description: 'Sample',
     appId: 'unknown',  
@@ -46,14 +48,14 @@ const POPUP_HTML = `
         </div>
 
         <div>
-            <label>Host</label>
+            <label>Host: </label>
             <input type="string" id="host" value="">
-        <div>
+        </div>
         
         <div>
             <label>Use Leaderboard</label>
             <input type="checkbox" id="use-leaderboard" value="Bike">
-        <div>
+        </div>
 
         <label>Tournament</label>
         <br>
