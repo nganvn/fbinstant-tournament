@@ -100,7 +100,6 @@ async function prepareCreateTournament() {
     const tournaments = getData(DataKey.TOURNAMENT_QUEUE)
 
     if (tournaments.length === 0) {
-        alert('Done')
         setState(State.STOPPED)
         return
     }
@@ -128,6 +127,9 @@ async function createTournamentAsync() {
         (n) => n.innerText === 'Create'
     )
     createButton.click()
+
+    const totalCreated = getData(DataKey.TOTAL_CREATED) || 0
+    setData(DataKey.TOTAL_CREATED, totalCreated + 1)
 }
 
 async function waiting(text, seconds) {

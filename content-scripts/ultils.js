@@ -93,9 +93,6 @@ async function fillOnFacebookTournament(tournament) {
         return
     }
 
-    const url = chrome.runtime.getURL(`banners/${Config.AppId}/${banner}`)
-    const base64 = await urlToBase64(url)
-
     const textareas = document.getElementsByTagName('textarea')
 
     textareas[0].textContent = description // tournament description
@@ -103,12 +100,15 @@ async function fillOnFacebookTournament(tournament) {
     textareas[1].textContent = title // tournament title
     textareas[1].value = title // tournament title
 
-    document.querySelector('#base64Image').value = base64
+    const url = chrome.runtime.getURL(`banners/${Config.AppId}/${banner}`)
+    const base64 = await urlToBase64(url)
+
+    if (base64.length) {
+        document.querySelector('#base64Image').value = base64
+    }
 
     if (Config.UseLeaderboard) {
-        const textareas = document.getElementsByTagName('textarea')
         leaderboardId = generateObjectId()
-
         // tournament payload
         const payload = JSON.stringify({
             leaderboardId,
