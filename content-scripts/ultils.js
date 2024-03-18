@@ -35,42 +35,87 @@ const currentTournament = {
   description: ''
 }
 
-function extractTournament() {      
-  const content = $("#content-input").val()
+async function processTournaments(tournaments) {
+  const correctTournaments = []
+  for (tournament of tournaments) {
+    const { banner, title, description, extraData } = tournament
+    const url = chrome.runtime.getURL(`banners/${Config.AppId}/${banner}`)
+    const base64 = await urlToBase64(url)
 
-  const contentArr = content.split('\t')
-
-  const tournament = {
-    title: contentArr[0],
-    description: contentArr[1]
+    correctTournaments.push({
+      base64: base64,
+      title,
+      description,  
+      extraData
+    })
   }
 
-  fillOnFacebookTournament(tournament)
-
-  return tournament
+  return correctTournaments
 }
 
-function fillOnFacebookTournament(tournament) {
-  const { title, description } = tournament
 
-  const textareas = document.getElementsByTagName('textarea')
+function extractTournaments() {      
+  const content = $("#content-input").val()
 
-  textareas[0].textContent = description // tournament description
-  textareas[1].textContent = title // tournament title
+  if (content.length === 0) return []
+
+  const tournaments = content.split('\t\n').map(n=> {
+    const contentArr = n.split('\t')
+
+    if (contentArr.length < 4) return null
+
+    let extraData = {}
+
+    try {
+      extraData = JSON.parse(contentArr[3])
+    } catch {
+      extraData = {}  
+    }
+
+    return {
+      banner: contentArr[0],
+      title: contentArr[1],
+      description: contentArr[2],
+      extraData
+    }
+  }).filter(n=>n)
+
+  return tournaments
 }
 
-function createTournament() {
-  const { title, description } = extractTournament()
+async function fillOnFacebookTournament(tournament) {
+  const { banner, title, description, extraData } = tournament
 
   if (!title || !description) {
     alert('Title, description cannot be empty')
     return
   }
 
+  const url = chrome.runtime.getURL(`banners/${Config.AppId}/${banner}`)
+  const base64 = await urlToBase64(url)
+
+  const textareas = document.getElementsByTagName('textarea')
+
+  textareas[0].textContent = description // tournament description
+  textareas[0].value = description // tournament description
+  textareas[1].textContent = title // tournament title
+  textareas[1].value = title // tournament title
+
+  document.querySelector('#base64Image').value = base64
+
   if (Config.UseLeaderboard) {
     const textareas = document.getElementsByTagName('textarea')
     leaderboardId = generateObjectId()
-    textareas[2].textContent = `{"leaderboardId":"${leaderboardId}"}` // tournament payload
+
+    // tournament payload
+    const payload = JSON.stringify({
+      leaderboardId,
+      gameType: extraData.gameType,
+      options: extraData.options
+    })
+
+    textareas[2].textContent = payload
+    textareas[2].value = payload
 
     const pendingTournament = {
       leaderboardId,
@@ -88,9 +133,6 @@ function createTournament() {
   } else {
     setData(DataKey.PENDING_TOURNAMENT, null)
   }
-
-  const createButton = [...document.getElementsByTagName('button')].find(n=>n.innerText === 'Create')
-  createButton.click()
 }
 
 async function requestCreateLeaderboardAsync(pendingLeaderboard) {
@@ -126,7 +168,7 @@ function getNewestTournament() {
   }
 }
 
-async function tryCheckPendingTournament() {
+function tryCheckPendingTournament() {
   const pendingTournament = getData(DataKey.PENDING_TOURNAMENT)
 
   setData(DataKey.PENDING_TOURNAMENT, null)
@@ -136,7 +178,15 @@ async function tryCheckPendingTournament() {
   if (tournament && pendingTournament) {
     const { context, tournamentId } = tournament
 
-    const description = `{\"contextID\":\"${context}\",\"tournamentID\":\"${tournamentId}\"}`
+    let extraData = getData(DataKey.LEADERBOARD_EXTRA_DATA)
+    
+    const leaderboardData = {
+      contextID: context,
+      tournamentID: tournamentId,
+      ...extraData
+    }
+
+    const description = JSON.stringify(leaderboardData)
     
     const pendingLeaderboard = {
       ...pendingTournament,
@@ -173,10 +223,10 @@ function tryCheckPendingLeaderboard() {
       requestCreateLeaderboardAsync(pendingLeaderboard)
 
       setData(DataKey.PENDING_LEADERBOARD, null)
-      
     }
   }
 }
+
 
 async function scanAllPages() {  
   document.getElementsByClassName('_aoxu')[1].getElementsByTagName('a')[0].click()
@@ -199,7 +249,6 @@ async function scanAllPages() {
     newOption.text = pageTexts[i];
     newOption.value = pageKeys[i];
     drowdown.add(newOption, null)
-    
   }
   
   const savedKey = getData('pageKey')
@@ -228,29 +277,46 @@ async function scanAllPages() {
 }
 
 function showConfig() {
-  document.getElementById('host').value = Config.Host
-
   document.getElementById('use-leaderboard').checked = Config.UseLeaderboard
 }
 
 function initPopup() {
   const divJQuery = $(POPUP_HTML);
   divJQuery.attr("style", "position: fixed; right: 0px; bottom: 0px; z-index: 10000;");
-
-  divJQuery.find("#create-button").click(createTournament)
   
-  divJQuery.find("#fill-button").click(extractTournament)
-  divJQuery.find("#host").on('change', function() {
-    Config.Host = this.value
-
-    setData(DataKey.HOST, Config.Host)
-  })
-
+  divJQuery.find("#button-set").click(setTournaments)
+  divJQuery.find("#button-run").click(onClickRun)
+  divJQuery.find("#button-clear").click(onClickClear)
+  
   
   divJQuery.find("#use-leaderboard").on('change', function() {
     Config.UseLeaderboard = this.checked
 
     setData(DataKey.USE_LEADERBOARD, Config.UseLeaderboard)
+  })
+
+  divJQuery.find('#content-input').on('change keyup paste', function() {
+    const tournaments = extractTournaments()
+    
+    document.getElementById('total-tournaments').innerText = `Tournaments: ${tournaments.length}`
+  })
+
+  const dropdown = divJQuery.find('#leaderboard-api-dropdown')  
+
+  for (let leaderboardApi of HOSTS) {
+    var newOption = document.createElement('option');
+    
+    newOption.text = leaderboardApi;
+    newOption.value = leaderboardApi;
+    dropdown.append(newOption, null)
+  }
+
+  dropdown.val(Config.Host).change()
+
+  dropdown.on('change', function() {
+    Config.Host = this.value
+
+    setData(DataKey.HOST, Config.Host)
   })
 
   $('body').append(divJQuery);
@@ -275,4 +341,37 @@ function addHistory(command) {
   console.log(history)
 
   setData(DataKey.HISTORY, history)
+}
+
+async function getBase64(file) {
+  return new Promise((resolve, reject) => {
+     var reader = new FileReader();
+     reader.readAsDataURL(file);
+     reader.onload = function () {
+       resolve(reader.result)
+     };
+     reader.onerror = function (error) {
+         reject('')
+     };
+  })
+}
+
+
+function urlToBase64(url) {
+  return new Promise(r => {
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+        var reader = new FileReader();
+        reader.onloadend = function() {
+            r(reader.result);
+        }
+        reader.readAsDataURL(xhr.response);
+    };
+    xhr.onerror = function() {
+      r('')
+    }
+    xhr.open('GET', url);
+    xhr.responseType = 'blob';
+    xhr.send();
+  })
 }

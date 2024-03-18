@@ -6,6 +6,11 @@ const URL = 'leaderboards'
 
 const DEFAULT_HOST = 'https://fbig-leaderboards.citigo.site'
 
+const HOSTS = [
+  'https://fbig-leaderboards.citigo.site',
+  'https://leaderboards-dev.sunstudio.io'
+]
+
 const DEFAULT_LEADERBOARD = {
     description: 'Sample',
     appId: 'unknown',  
@@ -34,7 +39,12 @@ const DataKey = {
     PENDING_LEADERBOARD: `pending-leaderboard`,
     HOST: 'host',
     USE_LEADERBOARD: 'use-leaderboard',
-    HISTORY: 'history'
+    HISTORY: 'history',
+    IMAGES: 'images',
+    TOURNAMENT_QUEUE: 'tournament-queue',
+    TOTAL_CREATED: 'total-created',
+    STATE: 'state',
+    RUNNING: 'running',
 }
 
 const POPUP_HTML = `
@@ -46,10 +56,11 @@ const POPUP_HTML = `
             <select name="pages" id="page-dropdown">
             </select>
         </div>
-
+        
         <div>
-            <label>Host: </label>
-            <input type="string" id="host" value="">
+            <label for="pages">LeaderboardAPI:</l abel>
+            <select name="pages" id="leaderboard-api-dropdown">
+            </select>
         </div>
         
         <div>
@@ -57,15 +68,25 @@ const POPUP_HTML = `
             <input type="checkbox" id="use-leaderboard" value="Bike">
         </div>
 
-        <label>Tournament</label>
+        <br>
+
+        <label id="total-tournaments">Tournaments</label>
         <br>
         <textarea id="content-input" class="textareaStyle"></textarea>
 
     </div>
-
+    
     <div class="buttonContainer">
-      <button id="fill-button" class="buttonStyle">Preview</button>
-      <button id="create-button" class="buttonStyle">Create</button>
+      <button id="button-set" class="buttonStyle">Set</button>
+      <button id="button-clear" class="buttonStyle">Clear</button>
+    </div>
+    
+    <div class="">
+      <label id='info'>Total: 0\nImages: 0\nCreated: 0</label>
+    </div>
+    
+    <div class="buttonContainer">
+      <button id="button-run" class="buttonStyle">Run</button>
     </div>
   </div>
 

@@ -2,7 +2,7 @@
 const Config = {
   Host: '',
   UseLeaderboard: false,
-  AppId: ''
+  AppId: '',
 }
 
 // host = 'https://leaderboards-dev.sunstudio.io'
@@ -29,7 +29,7 @@ async function main() {
   tryCheckPendingTournament()
   tryCheckPendingLeaderboard()
 
-  
+  start()
 }
 
 if (myLink.includes('instant-games/instant_tournament')) {
