@@ -1,5 +1,5 @@
 function addCss() {
-  var styles = `
+    var styles = `
   #management { 
     height: 100%;
     width: 100%;
@@ -80,8 +80,8 @@ function addCss() {
   }
   `
 
-  var styleSheet = document.createElement("style");
-  styleSheet.rel = "stylesheet";
-  styleSheet.innerText = styles;
-  document.head.appendChild(styleSheet);
+    var styleSheet = document.createElement('style')
+    styleSheet.rel = 'stylesheet'
+    styleSheet.innerText = styles
+    document.head.appendChild(styleSheet)
 }

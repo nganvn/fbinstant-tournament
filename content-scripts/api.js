@@ -14,47 +14,42 @@ const defaultConfig = () => {
     }
 }
 
-const requester =
-    (host, url, config, data) =>
-    async () => {
-        try {
-            const fullUrl = `${host}/apps/${Config.AppId}/${url}`
+const requester = (host, url, config, data) => async () => {
+    try {
+        const fullUrl = `${host}/apps/${Config.AppId}/${url}`
 
+        const controller = new AbortController()
+        config.signal = controller.signal
 
-            const controller = new AbortController()
-            config.signal = controller.signal
+        const timeout = setTimeout(() => {
+            controller.abort()
+        }, config.timeout)
 
-            const timeout = setTimeout(() => {
-                controller.abort()
-            }, config.timeout)
+        config.body = JSON.stringify(data)
 
-            config.body = JSON.stringify(data)
+        // console.log(fullUrl)
+        // fullUrl.searchParams.append('token', token);
 
-            // console.log(fullUrl)
-            // fullUrl.searchParams.append('token', token);
+        // console.info('Requester: request', { fullUrl, config });
 
-            // console.info('Requester: request', { fullUrl, config });
+        const response = await fetch(fullUrl, config)
 
-            const response = await fetch(fullUrl, config)
+        clearTimeout(timeout)
 
-            clearTimeout(timeout)
+        validateResponse(response)
 
-            validateResponse(response)
+        // console.info('Requester: response', { response });
 
-            // console.info('Requester: response', { response });
+        const json = (await response.json()) || {}
 
-            const json = (await response.json()) || {}
-
-            // console.info('Requester: result', { json });
-            return json
-        } catch (error) {
-            //
-        }
+        // console.info('Requester: result', { json });
+        return json
+    } catch (error) {
+        //
     }
+}
 
-const handleRequest = async (
-    asyncFunc,
-)=> {
+const handleRequest = async (asyncFunc) => {
     try {
         return asyncFunc()
     } catch (error) {
@@ -62,12 +57,7 @@ const handleRequest = async (
     }
 }
 
-const get = async (
-    url,
-    configs = {},
-    host,
-    retry = 1
-) => {
+const get = async (url, configs = {}, host, retry = 1) => {
     try {
         const config = {
             ...defaultConfig(),
@@ -83,13 +73,7 @@ const get = async (
     }
 }
 
-const post = async (
-    url,
-    data,
-    configs = {},
-    host,
-    retry = 1
-) => {
+const post = async (url, data, configs = {}, host, retry = 1) => {
     try {
         const config = {
             ...defaultConfig(),
@@ -100,9 +84,7 @@ const post = async (
         const request = requester(host, url, config, data)
         return await handleRequest(request, retry)
     } catch (error) {
-        
         console.warn(error)
         return {}
     }
 }
-

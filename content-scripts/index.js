@@ -1,8 +1,7 @@
-
 const Config = {
-  Host: '',
-  UseLeaderboard: false,
-  AppId: '',
+    Host: '',
+    UseLeaderboard: false,
+    AppId: '',
 }
 
 // host = 'https://leaderboards-dev.sunstudio.io'
@@ -10,29 +9,28 @@ const Config = {
 // const host = 'https://fbig-leaderboards.citigo.site'
 
 async function main() {
-  await sleepAsync(500)
+    await sleepAsync(500)
 
-  initConfig()
-  
-  console.log(Config)
+    initConfig()
 
-  addHistory({
-    type: CommandType.TRAFFIC,
-  })
+    console.log(Config)
 
-  addCss()
-  initPopup()
+    addHistory({
+        type: CommandType.TRAFFIC,
+    })
 
-  scanAllPages()
-  showConfig()
+    addCss()
+    initPopup()
 
-  tryCheckPendingTournament()
-  tryCheckPendingLeaderboard()
+    scanAllPages()
+    showConfig()
 
-  start()
+    tryCheckPendingTournament()
+    tryCheckPendingLeaderboard()
+
+    start()
 }
 
 if (myLink.includes('instant-games/instant_tournament')) {
-  main()
-} 
-
+    main()
+}

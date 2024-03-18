@@ -9,10 +9,13 @@ async function updateInfo() {
 
     const tournaments = await processTournaments(rawTournaments)
     const total = tournaments.length
-    const totalEmptyExtraData = tournaments.filter(n=>Object.keys(n.extraData).length === 0).length
+    const totalEmptyExtraData = tournaments.filter(
+        (n) => Object.keys(n.extraData).length === 0
+    ).length
     const totalCreated = getData(DataKey.TOTAL_CREATED) || 0
 
-    document.getElementById('info').innerText = `Total: ${total}, Images: ${tournaments.filter(n=>n.base64).length}, EmptyExtraData: ${totalEmptyExtraData} Created: ${totalCreated}`
+    document.getElementById('info').innerText =
+        `Total: ${total}, Images: ${tournaments.filter((n) => n.base64).length}, EmptyExtraData: ${totalEmptyExtraData} Created: ${totalCreated}`
 }
 
 async function setTournaments() {
@@ -38,7 +41,6 @@ function onClickRun() {
             return
         case State.STOPPED:
         default:
-            
             const tournaments = getData(DataKey.TOURNAMENT_QUEUE)
             if (tournaments.length === 0) {
                 alert('No tournament to run')
@@ -50,7 +52,6 @@ function onClickRun() {
     }
 }
 
-
 function onClickClear() {
     setData(DataKey.RUNNING, false)
     setData(DataKey.TOURNAMENT_QUEUE, [])
@@ -60,7 +61,6 @@ function onClickClear() {
 
     setState(State.STOPPED)
 }
-
 
 async function start() {
     const running = getData(DataKey.RUNNING)
@@ -72,7 +72,6 @@ async function start() {
 
     updateInfo()
 }
-
 
 function setState(state) {
     setData(DataKey.STATE, state)
@@ -86,7 +85,7 @@ function processState() {
         case 'PREPARE':
             prepareCreateTournament()
             break
-        case 'RUNNING':            
+        case 'RUNNING':
             createTournamentAsync()
             break
         case 'STOPPED':
@@ -105,29 +104,29 @@ async function prepareCreateTournament() {
         setState(State.STOPPED)
         return
     }
-    
+
     const tournament = tournaments[0]
     fillOnFacebookTournament(tournament)
 
     setState(State.RUNNING)
 }
 
-
 async function createTournamentAsync() {
     await waiting('Creating', 3)
-    
+
     if (getData(DataKey.STATE) === State.STOPPED) {
         return
     }
 
-    
     document.getElementById('button-run').innerText = `Do not close! 🚑🦽`
 
     const tournaments = getData(DataKey.TOURNAMENT_QUEUE)
     tournaments.shift()
     setData(DataKey.TOURNAMENT_QUEUE, tournaments)
 
-    const createButton = [...document.getElementsByTagName('button')].find(n=>n.innerText === 'Create')
+    const createButton = [...document.getElementsByTagName('button')].find(
+        (n) => n.innerText === 'Create'
+    )
     createButton.click()
 }
 

@@ -1,4 +1,4 @@
-const myLink = window.location.href;
+const myLink = window.location.href
 
 const TOKEN = ''
 
@@ -6,15 +6,12 @@ const URL = 'leaderboards'
 
 const DEFAULT_HOST = 'https://fbig-leaderboards.citigo.site'
 
-const HOSTS = [
-  'https://fbig-leaderboards.citigo.site',
-  'https://leaderboards-dev.sunstudio.io'
-]
+const HOSTS = ['https://fbig-leaderboards.citigo.site', 'https://leaderboards-dev.sunstudio.io']
 
 const DEFAULT_LEADERBOARD = {
     description: 'Sample',
-    appId: 'unknown',  
-    name: "Sample", // title
+    appId: 'unknown',
+    name: 'Sample', // title
 
     resetScore: 0,
     numberOfLeaders: 15,
@@ -28,10 +25,10 @@ const DEFAULT_LEADERBOARD = {
 }
 
 const CommandType = {
-  ADD_PENDING_LEADERBOARD: 'ADD_PENDING_LEADERBOARD',
-  CREATE_LEADERBOARD: 'CREATE_LEADERBOARD',
-  ADD_PENDING_TOURNAMENT: 'ADD_PENDING_TOURNAMENT',
-  TRAFFIC: 'TRAFFIC',
+    ADD_PENDING_LEADERBOARD: 'ADD_PENDING_LEADERBOARD',
+    CREATE_LEADERBOARD: 'CREATE_LEADERBOARD',
+    ADD_PENDING_TOURNAMENT: 'ADD_PENDING_TOURNAMENT',
+    TRAFFIC: 'TRAFFIC',
 }
 
 const DataKey = {
@@ -92,4 +89,3 @@ const POPUP_HTML = `
 
 </div>
 `
-
