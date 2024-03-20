@@ -112,8 +112,7 @@ async function fillOnFacebookTournament(tournament) {
         // tournament payload
         const payload = JSON.stringify({
             leaderboardId,
-            gameType: extraData.gameType,
-            options: extraData.options,
+            ...extraData,
         })
 
         textareas[2].textContent = payload
@@ -124,6 +123,7 @@ async function fillOnFacebookTournament(tournament) {
             title,
             host: Config.Host,
             appId: Config.AppId,
+            extraData,
         }
 
         setData(DataKey.PENDING_TOURNAMENT, pendingTournament)
@@ -183,7 +183,7 @@ function tryCheckPendingTournament() {
     if (tournament && pendingTournament) {
         const { context, tournamentId } = tournament
 
-        let extraData = getData(DataKey.LEADERBOARD_EXTRA_DATA)
+        let extraData = pendingTournament.extraData
 
         const leaderboardData = {
             contextID: context,
@@ -324,10 +324,10 @@ function initPopup() {
 }
 
 function initConfig() {
-    Config.AppId = document.getElementsByClassName('_2lj1')[0].innerText || ''
+    Config.AppId = document.getElementsByClassName('_2lj1')[0]?.innerText || ''
 
-    Config.Host = getData(DataKey.HOST) || DEFAULT_HOST
-    Config.UseLeaderboard = getData(DataKey.USE_LEADERBOARD) || true
+    Config.Host = getData(DataKey.HOST) ?? DEFAULT_HOST
+    Config.UseLeaderboard = getData(DataKey.USE_LEADERBOARD) ?? true
 }
 
 function addHistory(command) {
