@@ -1,4 +1,5 @@
-﻿function setData(sKey, sValue) {
+﻿
+function setData(sKey, sValue) {
     if (typeof sValue === 'string') {
         localStorage.setItem('tournament' + sKey + Config.AppId, sValue)
 
@@ -38,9 +39,9 @@ const currentTournament = {
 async function processTournaments(tournaments) {
     const correctTournaments = []
     for (tournament of tournaments) {
-        const { banner, title, description, extraData } = tournament
-        const url = chrome.runtime.getURL(`banners/${Config.AppId}/${banner}`)
-        const base64 = await urlToBase64(url)
+        const { bannerUrl, title, description, extraData } = tournament
+        const url = bannerUrl ? chrome.runtime.getURL(`banners/${Config.AppId}/${bannerUrl}`) : ''
+        const base64 = url ? await urlToBase64(url) : ''
 
         correctTournaments.push({
             base64: base64,
@@ -53,40 +54,8 @@ async function processTournaments(tournaments) {
     return correctTournaments
 }
 
-function extractTournaments() {
-    const content = $('#content-input').val()
-
-    if (content.length === 0) return []
-
-    const tournaments = content
-        .split('\t\n')
-        .map((n) => {
-            const contentArr = n.split('\t')
-
-            if (contentArr.length < 4) return null
-
-            let extraData = {}
-
-            try {
-                extraData = JSON.parse(contentArr[3])
-            } catch {
-                extraData = {}
-            }
-
-            return {
-                banner: contentArr[0],
-                title: contentArr[1],
-                description: contentArr[2],
-                extraData,
-            }
-        })
-        .filter((n) => n)
-
-    return tournaments
-}
-
 async function fillOnFacebookTournament(tournament) {
-    const { banner, title, description, extraData } = tournament
+    const { base64, title, description, extraData } = tournament
 
     if (!title || !description) {
         alert('Title, description cannot be empty')
@@ -100,8 +69,6 @@ async function fillOnFacebookTournament(tournament) {
     textareas[1].textContent = title // tournament title
     textareas[1].value = title // tournament title
 
-    const url = chrome.runtime.getURL(`banners/${Config.AppId}/${banner}`)
-    const base64 = await urlToBase64(url)
 
     if (base64.length) {
         document.querySelector('#base64Image').value = base64
@@ -125,15 +92,9 @@ async function fillOnFacebookTournament(tournament) {
             appId: Config.AppId,
             extraData,
         }
-
-        setData(DataKey.PENDING_TOURNAMENT, pendingTournament)
-
-        addHistory({
-            type: CommandType.ADD_PENDING_TOURNAMENT,
-            pendingTournament,
-        })
+        setData(DataKey.PREFILL_PENDING_TOURNAMENT, pendingTournament)
     } else {
-        setData(DataKey.PENDING_TOURNAMENT, null)
+        setData(DataKey.PREFILL_PENDING_TOURNAMENT, null)
     }
 }
 
@@ -146,7 +107,7 @@ async function requestCreateLeaderboardAsync(pendingLeaderboard) {
         appId,
         name: title,
         description,
-        description,
+        expireTime: Config.ExpireTime || DEFAULT_LEADERBOARD.expireTime,
     }
 
     addHistory({
@@ -229,105 +190,16 @@ function tryCheckPendingLeaderboard() {
     }
 }
 
-async function scanAllPages() {
-    document.getElementsByClassName('_aoxu')[1].getElementsByTagName('a')[0].click()
-
-    await sleepAsync(10)
-
-    const pages = document.getElementsByClassName('_54nf')[0].getElementsByClassName('fwb')
-
-    const pageTexts = [...pages].map((n) => n.innerText)
-
-    const length = pageTexts.length
-
-    const pageKeys = pageTexts.map((pageName) => pageName.replaceAll(' ', ''))
-    const drowdown = document.getElementById('page-dropdown')
-
-    for (let i = 0; i < length; i++) {
-        var newOption = document.createElement('option')
-
-        newOption.text = pageTexts[i]
-        newOption.value = pageKeys[i]
-        drowdown.add(newOption, null)
-    }
-
-    const savedKey = getData('pageKey')
-    const pageIndex = pageKeys.indexOf(savedKey)
-
-    console.log({
-        savedKey,
-        pageKeys,
-    })
-
-    if (pageIndex >= 0) {
-        pages[pageIndex].click()
-        drowdown.value = savedKey
-    } else {
-        document.getElementsByClassName('_aoxu')[1].getElementsByTagName('a')[0].click()
-    }
-
-    drowdown.addEventListener('change', async (env, value) => {
-        const pageIndex = pageKeys.indexOf(drowdown.value)
-
-        document.getElementsByClassName('_aoxu')[1].getElementsByTagName('a')[0].click()
-        await sleepAsync(10)
-        pages[pageIndex].click()
-
-        setData('pageKey', drowdown.value)
-    })
-}
-
-function showConfig() {
-    document.getElementById('use-leaderboard').checked = Config.UseLeaderboard
-}
-
 function initPopup() {
     const divJQuery = $(POPUP_HTML)
     divJQuery.attr('style', 'position: fixed; right: 0px; bottom: 0px; z-index: 10000;')
 
-    divJQuery.find('#button-set').click(setTournaments)
     divJQuery.find('#button-run').click(onClickRun)
     divJQuery.find('#button-clear').click(onClickClear)
+    divJQuery.find('#button-set').click(onClickSet)
 
-    divJQuery.find('#use-leaderboard').on('change', function () {
-        Config.UseLeaderboard = this.checked
-
-        setData(DataKey.USE_LEADERBOARD, Config.UseLeaderboard)
-    })
-
-    divJQuery.find('#content-input').on('change keyup paste', function () {
-        const tournaments = extractTournaments()
-
-        document.getElementById('total-tournaments').innerText =
-            `Tournaments: ${tournaments.length}`
-    })
-
-    const dropdown = divJQuery.find('#leaderboard-api-dropdown')
-
-    for (let leaderboardApi of HOSTS) {
-        var newOption = document.createElement('option')
-
-        newOption.text = leaderboardApi
-        newOption.value = leaderboardApi
-        dropdown.append(newOption, null)
-    }
-
-    dropdown.val(Config.Host).change()
-
-    dropdown.on('change', function () {
-        Config.Host = this.value
-
-        setData(DataKey.HOST, Config.Host)
-    })
 
     $('body').append(divJQuery)
-}
-
-function initConfig() {
-    Config.AppId = document.getElementsByClassName('_2lj1')[0]?.innerText || ''
-
-    Config.Host = getData(DataKey.HOST) ?? DEFAULT_HOST
-    Config.UseLeaderboard = getData(DataKey.USE_LEADERBOARD) ?? true
 }
 
 function addHistory(command) {
@@ -338,8 +210,6 @@ function addHistory(command) {
     }
 
     history.push(command)
-
-    console.log(history)
 
     setData(DataKey.HISTORY, history)
 }
@@ -374,4 +244,22 @@ function urlToBase64(url) {
         xhr.responseType = 'blob'
         xhr.send()
     })
+}
+
+function getWeekIndex(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+
+  return weekNo;
+}
+
+
+function extractAppIdFromUrl(url) {
+  const match = url.match(/\/apps\/(\d+)\//);
+  return match ? match[1] : null;
 }

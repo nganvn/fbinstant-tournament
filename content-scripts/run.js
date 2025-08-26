@@ -5,29 +5,14 @@ const State = {
 }
 
 async function updateInfo() {
-    const rawTournaments = getData(DataKey.TOURNAMENT_QUEUE)
+    const rawTournaments = getData(DataKey.TOURNAMENT_QUEUE) || []
 
     const tournaments = await processTournaments(rawTournaments)
     const total = tournaments.length
-    const totalEmptyExtraData = tournaments.filter(
-        (n) => Object.keys(n.extraData).length === 0
-    ).length
     const totalCreated = getData(DataKey.TOTAL_CREATED) || 0
 
     document.getElementById('info').innerText =
-        `Total: ${total}, Images: ${tournaments.filter((n) => n.base64).length}, EmptyExtraData: ${totalEmptyExtraData} Created: ${totalCreated}`
-}
-
-async function setTournaments() {
-    const tournaments = extractTournaments()
-
-    if (tournaments.length === 0) {
-        alert('No tournament')
-    } else {
-        setData(DataKey.TOURNAMENT_QUEUE, tournaments)
-        setData(DataKey.TOTAL_CREATED, 0)
-        updateInfo()
-    }
+        `Total: ${total}, Images: ${tournaments.filter((n) => n.base64).length}, Created: ${totalCreated}`
 }
 
 function onClickRun() {
@@ -40,15 +25,9 @@ function onClickRun() {
             setState(State.STOPPED)
             return
         case State.STOPPED:
-        default:
-            const tournaments = getData(DataKey.TOURNAMENT_QUEUE)
-            if (tournaments.length === 0) {
-                alert('No tournament to run')
-                return
-            }
-
             setState(State.PREPARE)
             setData(DataKey.RUNNING, true)
+        default:
     }
 }
 
@@ -60,6 +39,21 @@ function onClickClear() {
     updateInfo()
 
     setState(State.STOPPED)
+}
+
+function onClickSet() {
+    const totalWeeks = Math.floor(Config.Tournaments.length / Config.TournamentsPerWeek)
+
+    const weekIndex = getWeekIndex(new Date()) % totalWeeks * Config.TournamentsPerWeek
+
+    const tournaments = Config.Tournaments.slice(weekIndex, weekIndex + Config.TournamentsPerWeek)
+    if (tournaments.length === 0) {
+        alert('No tournament to run')
+        return
+    }
+
+    setData(DataKey.TOURNAMENT_QUEUE, tournaments)
+    updateInfo()
 }
 
 async function start() {
@@ -104,14 +98,43 @@ async function prepareCreateTournament() {
         return
     }
 
-    const tournament = tournaments[0]
+    const tournament = (await processTournaments(tournaments))[0]
     fillOnFacebookTournament(tournament)
+    await correctTournamentPage()
 
     setState(State.RUNNING)
 }
 
+async function correctTournamentPage() {
+    const pageElement = document.getElementsByClassName('_aoxu')[1].getElementsByTagName('a')[0]
+    
+    if (pageElement.innerText !== Config.PageName) {
+        pageElement.click()
+        await sleepAsync(10)
+
+        const pages = document.getElementsByClassName('_54nf')[0].getElementsByClassName('fwb')
+
+        const pageToClick = [...pages].find((n) => n.innerText === Config.PageName)
+        if (!pageToClick) {
+            throw new Error(`Cannot find page ${Config.PageName}`)
+        }
+        pageToClick.click()
+        await sleepAsync(10)
+    }
+}
+
 async function createTournamentAsync() {
-    await waiting('Creating', 3)
+    await waiting('Creating', 5)
+
+    const pendingTournament = getData(DataKey.PREFILL_PENDING_TOURNAMENT)
+
+    setData(DataKey.PENDING_TOURNAMENT, pendingTournament)
+    setData(DataKey.PREFILL_PENDING_TOURNAMENT, null)
+
+    addHistory({
+        type: CommandType.ADD_PENDING_TOURNAMENT,
+        pendingTournament,
+    })
 
     if (getData(DataKey.STATE) === State.STOPPED) {
         return

@@ -1,6 +1,6 @@
 {
   "name": "Create Tournament - SUN",
-  "version": "1.3",
+  "version": "2.1",
   "manifest_version": 3,
   "description": "Create tournament",
   "permissions": [
@@ -24,6 +24,7 @@
       "js": [
         "lib/jquery.min.js",
         "content-scripts/const.js",
+        "content-scripts/configs.js",
         "content-scripts/api.js",
         "content-scripts/ultils.js",
         "content-scripts/run.js",

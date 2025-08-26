@@ -1,29 +1,25 @@
-const Config = {
-    Host: '',
-    UseLeaderboard: false,
-    AppId: '',
-}
+let Config = null
 
-// host = 'https://leaderboards-dev.sunstudio.io'
-// const host = 'https://fbig-leaderboards.citigo.site'
-// const host = 'https://fbig-leaderboards.citigo.site'
+const AppID = extractAppIdFromUrl(window.location.href)
 
 async function main() {
-    await sleepAsync(500)
-
-    initConfig()
-
-    console.log(Config)
-
-    addHistory({
-        type: CommandType.TRAFFIC,
-    })
+    Config = Configs.find(predicate => predicate.AppId === AppID)
 
     addCss()
     initPopup()
+    
 
-    scanAllPages()
-    showConfig()
+    const appInfoPre = document.getElementById('app-info');
+    if (appInfoPre && Config) {
+        const displayConfig = { ...Config };
+        displayConfig.Tournaments = displayConfig.Tournaments.length;
+        appInfoPre.innerText = Object.entries(displayConfig).map(([key, value]) => {
+            return `${key}: ${value}`;
+        }).join('\n');
+    } else {
+        console.error('Config not found for this appId: ' + AppID);
+        return;
+    }
 
     tryCheckPendingTournament()
     tryCheckPendingLeaderboard()
